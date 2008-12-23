@@ -31,7 +31,8 @@ CSV, XML, YAML, PDF, JSON, JSONP, EXCEL, FOAF, HTML, XHTML, Microformats, RSS, A
 
 ## CSV
 
-Ruby 1.9 uses fastercsv by default. <http://ruby-doc.org/core-1.9/classes/CSV.html>
+* Ruby 1.9 uses fastercsv by default. <http://ruby-doc.org/core-1.9/classes/CSV.html>
+* CSV Mapper <http://csv-mapper.rubyforge.org/>
 
 ## CSS
 
