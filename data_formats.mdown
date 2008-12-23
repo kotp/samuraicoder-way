@@ -47,6 +47,7 @@ CSV, XML, YAML, PDF, JSON, JSONP, EXCEL, FOAF, HTML, XHTML, Microformats, RSS, A
 ## Excel
 
 * parseexcel
+* http://spreadsheet.rubyforge.org/
 
 ## RSS and ATOM
 
