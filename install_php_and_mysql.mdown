@@ -1,0 +1,317 @@
+Please send me an email if you find an error. What else do you want to know? Xdebug integration? How to set virtual hosts? Email me. Recently tested on OS X 10.5.6.
+
+----
+
+Installing PHP and MySQL on Leopard
+===================================
+
+(**Important:** This documentatoin is still *pre-alpha*. I still have a MySQL launching problem. If you find any error on this tutorial, please email me.)
+
+
+Why Install?
+------------
+
+As the built-in PHP is missing some key features, it's not very usable as a web development environment. This tutorial aims to instruct the way to install PHP 5, Apache2 and MySQL 5 for Mac OS X 10.5 (Leopard) running under Intel-based Macs.
+
+Prerequisite
+------------
+
+If you are not comfortable with editing files with command line tools such vi, pico and emacs, I would highly suggest that you use a GUI editor with command-line tool support. This tutorial uses [TextMate](http://macromates.com/). You can install TextMate's command line tool, `mate` from "Help" &#x2192; "Terminal Usage...".
+
+(TODO: screenshot for a dialog for the mate command install might be added.)
+
+You should have a basic understanding of Mac OS X and Unix. Familiarity with basic commands like `cd`, `ls`, `which`, `man`, `sudo` and `chmod` is a prerequisite. [Unix FAQ at The macosxhints Forums](http://forums.macosxhints.com/showthread.php?t=40648) is a great resource if you get into trouble. After running a command that start with `sudo`, you are asked to enter your password. Try add `sudo` if you see permission errors.
+
+We are using [MacPorts][] as a tool to install them. MacPorts is (from the official website):
+
+[MacPorts]: http://guide.macports.org/
+
+>A system for compiling, installing, and managing free and open source software comprised of an infrastructure called MacPorts base and a collection of ports. MacPorts current port collection defines the software may be installed.
+
+With MacPorts, you don't have to download source files, configure and compile them on your own.
+
+Installing MacPorts
+-------------------
+
+MacPorts has an excellent documentation for users. Follow [the guide][install_guide]. The easiest way is to follow the package install as written in section 2.3.1. Don't forget to install Xcode Tools before opening the package. In addition, after installing MacPorts with the package, be sure to set the path as written in [section 2.4][sec24]. Your system doesn't recognize MacPorts unless you set the right path in `.profile`.
+
+Read MacPorts guide carefully. I would rather not explain each step for MacPorts installation. The guide is easy-to-read and well-written.
+
+[install_guide]: http://guide.macports.org/#installing
+[sec24]: http://guide.macports.org/#installing.shell
+
+You can check make sure that MacPorts is ready to use by runnning the following command in Terminal:
+
+	port help
+
+MacPorts uses `port` as the command. The command above shows help page of the port command. That's a compact description of various usage of the command. It should start with somethig like this:
+
+	port
+       	[-bcdfiknopqRstuvx] [-D portdir] [-F cmdfile] action [privopts] [actionflags]
+       	[[portname|pseudo-portname|port-url] [@version] [+-variant]... [option=value]...]...
+
+
+If you see an error at this point, double-check the path in `.profile`. After editing `.profile`, you need to open a new Terminal window. Read [the section](http://guide.macports.org/#installing.shell) carefully.
+
+Installing MacPorts doesn't guarantee that everything works. We need to (a) check if there's any update of MacPorts itself, and we need to (b) update the list of available installs.
+
+We use `selfupdate` for (a) and `sync` for (b). Both require admin access, which means you prepend `sudo` to the command itself. After runnin the commands, you will be asked to type your password. 
+
+(a) selfupdate
+
+	sudo port selfupdate
+
+(b) sync
+
+	sudo port sync
+
+(Note: You don't have to use `port sync` because `port selfupdate` includes `port sync`.)
+As is often the case with Unix commands, if you see no message, the command run successfuly.
+
+Installing PHP, MySQL and Apache with MacPorts
+----------------------------------------------
+
+What we want are:
+
+* PHP, MySQL and Apache installation
+* Files needed for automatic startup
+
+We install PHP, MySQL and Apache all at once. We need all of them working together. We also want to start the web server (Apache) and database (MySQL) automatically when we log into Mac OS X. Starting the Apache and MySQL manually everytime you restart your Mac is a pain in the ass.
+
+The automatic startup process is done by [launchd][]. We want to download the files needed for launchd, not just files needed to make the server up and running. (d in launchd stands for [daemon][].)
+
+[launchd]: http://developer.apple.com/macosx/launchd.html
+[daemon]: http://en.wikipedia.org/wiki/Daemon_%28computer_software%29
+
+The command we use is `port install`. We want to install PHP 5 that comes with Apache and MySQL. To get other necessary installs such as Apache and MySQL, we use [port variants][variants]. Variants are (from the offical documentation):
+
+>Variants are a way for port authors to provide options for a port that may be chosen during the port install.
+
+Variants are added when used with plus sign (+).
+
+[variants]: http://guide.macports.org/#using.variants
+
+As of this writing, installing Apache with MacPorts on Mac OS X (Leopard) gives an error. We use a workaround to avoid the issues. The workaround is to install `gawk` and `nawk` before anything else. (See [the ticket][ticket] for details.)
+
+[ticket]: http://trac.macports.org/projects/macports/ticket/13066
+
+
+Okay. Let's dive into the most important part. We are going to install PHP 5, MySQL 5 and Apache 2 at the same time. Run the following command. Wait a while. Time for coffee.
+
+	sudo port install php5 +apache2 +mysql5 +server
+
+(Note: +server is not listed as a variant for php5. +server is a variant for mysql5. Without +server option, you don't get a file needed for launchd.)
+
+MacPorts output a log on your Terminal screen while installation. The information is useful when you encounter a problem.
+
+Automatic startup with launchd
+-------------------------------
+
+We are going to set up our installs to make them work together. First we will run launchd that is necessary for the automatical startup. You may get some errors after running the commands because you haven't configured Apache or MySQL yet. Just run the commands now. (See [the man page][launchd_man] to know more about `launchd`)
+
+[launchd_man]: (http://developer.apple.com/documentation/Darwin/Reference/ManPages/man8/launchd.8.html)
+
+	sudo launchctl load -w /Library/LaunchDaemons/org.macports.apache2.plist
+
+and
+
+	sudo launchctl load -w /Library/LaunchDaemons/org.macports.mysql5.plist
+
+To lean more about `launchctl`, visit [the man page][launchctl_man] As you may have notices, the two files we loaded are located in `/Library/LaunchDaemon`. But with some exceptions, MacPorts installs everything at `/opt`.
+
+[launchctl_man]: http://developer.apple.com/documentation/Darwin/Reference/ManPages/man1/launchctl.1.html
+
+
+
+
+Runnin Apache and PHP
+---------------------
+
+Let's set up Apache and PHP. Run the following command.
+
+	cd /opt/local/apache2/modules
+
+and
+
+	sudo /opt/local/apache2/bin/apxs -a -e -n "php5" libphp5.so
+
+We then need to make two configuration files. One for Apache and the other for PHP. We don't write configuration files from scrach. We simply make a copy of a default setting and rename with a new name.
+
+PHP's configuration file (php.ini) can be made by copying the sample file.
+
+	sudo cp /opt/local/etc/php.ini-dist /opt/local/etc/php.ini
+
+Apache's configuration file (httpd.conf) can be made by copying the sample file.
+
+	sudo cp /opt/local/apache2/conf/httpd.conf.sample /opt/local/apache2/conf/httpd.conf
+
+
+To lean more about `cp` command, visit [the man page][cp_man] .
+
+[cp_man]: http://developer.apple.com/documentation/Darwin/Reference/ManPages/man1/cp.1.html
+
+Editing Apache Configuration files
+----------------------------------
+
+In order for Apache to work with PHP, you need to edit the configuration file. You can use your favorite text editor. TextMate, [BBEdit][], [SubEthaEdit][], vi, emacs or pico will do for you. I use `mate` command of TextMate as an example.
+
+	mate /opt/local/apache2/conf/httpd.conf
+
+If you get an error, the command tool, `mate`, is not installed.
+
+[BBEdit]: http://www.barebones.com/products/bbedit/
+[SubEthaEdit]: http://www.codingmonkeys.de/subethaedit/
+
+
+Workaround of ssl_module
+------------------------
+
+There is a bug in a module. In the httpd.conf, find "LoadModule ssl\_module modules/mod\_ssl.so" and comment out the line. # sign is used for comments in Apache files. The resultant line now should look like this.
+
+(TODO: More explanation for why this happens will be good.)
+
+	#LoadModule ssl_module modules/mod_ssl.so
+
+Activating PHP via Apache files
+-------------------------------
+
+Apache file needs to be configuired so that it can work with PHP.
+
+Add the following the httpd.conf file and save it.
+
+	LoadModule php5_module modules/libphp5.so
+	AddHandler php5-script .php
+	AddType text/html .php
+	DirectoryIndex index.php
+
+Check if Apache and PHP work correctly. Before running the web server, make sure you turn off "Web Sharing" at Sharing in System Preferences. You will get an error if you try to do the command below with Web Sharing on.
+
+Now let's run Apache server by running:
+
+	sudo /opt/local/apache2/bin/apachectl restart
+
+(Note: you have more than one `apachectl` installed because Mac OS X comes with it. Therefore you need to specify the path to the command. Just to remember "ctl" means "control".)
+
+Where your web files are located
+--------------------------------
+
+The files you access from your browser is located at `/opt/local/apache2/htdocs`. The directory already has several folders including index.html. Visit [localhost](http://localhost). If you see the webpage say "It works.", your web server is running without a problem. Congraturations. Apache is working.
+
+(TODO: screenshot will be added.)
+
+Next, we want to know if PHP is working. Make a php file that contains a PHP script. I will do so by creating a file called "test.php".
+
+	mate /opt/local/apache2/htdocs/test.php
+
+
+Write a short script shown below in the file and save it.
+
+	<?php phpinfo(); ?>
+
+[phpinfo](http://fr.php.net/manual/en/function.phpinfo.php) function shows your PHP configuration. Visit [localhost/test.php](http://localhost/test.php). It will output a long page that contains all the configuration information starting with your PHP version number.
+
+
+Activating MySQL
+----------------
+
+You can't still use MySQL yet. Let's initialize the database. Run the command.
+
+	sudo -u mysql mysql_install_db5
+
+Make a configuration file, my.cnf by copying from `/opt/local/share/mysql5/mysql/my-small.cnf`.
+
+	sudo cp /opt/local/share/mysql5/mysql/my-small.cnf /opt/local/etc/mysql5/my.cnf
+
+Run the MySQL daemon. By this command, MySQL will keep on running in the background.
+
+	sudo /opt/local/lib/mysql5/bin/mysqld_safe
+
+(Note: We haven't set a password for root. It is recommended that you set a password for root.)
+
+Let's use MySQL. Open another Terminal window or tab, and run the command:
+
+	mysql5 -u root
+
+Did you see an error like this?
+
+	ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/opt/local/var/run/mysql5/mysqld.sock' (2)
+
+If you see the error, you may not have a socket file. Create a file with `touch` command. `touch` command simply creates an empty file.
+
+	sudo touch /opt/local/var/run/mysql5/mysqld.sock
+
+(**FIXME: I have no idea why I need to restart the sytem.**)
+
+And restart the system and try once again. (Note: I don't know why MySQL gets stuck for this problem. Need your help!)
+
+If successful, you see the welcome message like this:
+
+>Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 3
+Server version: 5.0.51 Source distribution
+
+>Type 'help;' or '\h' for help. Type '\c' to clear the buffer.
+
+>mysql> 
+
+Type `quit` to exit from MySQL. Now we know MySQL is working.
+
+Setting up a password for MySQL
+-------------------------------
+
+We haven't set a password for the root user. As the root user has a permission to do anything, this is a security risk. We use the following command to set up a root password. Replace the 'secret-password' with your original password.
+
+	mysqladmin5 -u password 'secret-password'
+
+Then, let's connect to MySQL with your password.
+
+	mysql5 -u root -p
+
+You will be asked to enter your password. Type your password press return.
+
+See the welcome message? Then the password you just set works. Exit from MySQL by running `quit`.
+
+Connecting MySQL via PHP
+------------------------
+
+We not modify the test.php so that we test if your PHP script can connect to MySQL.
+
+	mate /opt/local/apache2/htdocs/test.php
+
+Type the following script in test.php and save it. Don't forget to change the "secret_password" with the password you just for your root password. When you save it, you will be asked to enter your password.
+
+	<?php
+
+	$connection = mysql_connect("localhost", "root", "secret_password");
+
+	if ($connection) {
+		echo "MySQL connection is successful.";
+	} else {
+		echo "MySQL connection failed.";
+	}
+
+	?>
+
+Now visit <http://localhost/test.php>. If you see "MySQL connection is successful.", your connection is successful. If you get an error: Access denied for user \'root\'@\'localhost\' (using password: YES), then your passwod is in correct. Make sure your password in test.php is correct.
+
+Important File Locatoins
+-------------------------
+
+You at least should remember the important file locations. During your adventure with web development, you will find many other tutorials that ask you to change configuration. You basically need the following information.
+
+* Apache configuration file is `/opt/local/apache2/conf/httpd.conf`.
+* PHP configuration file is `/opt/local/etc/php.ini`.
+* Web root directory is `/opt/local/apache2/htdocs/`.
+* MySQL configuration file is `/opt/local/etc/mysql5/my.cnf`.
+
+References
+----------
+
+* [MacPorts Guide](http://guide.macports.org/)
+* [sudo](http://en.wikipedia.org/wiki/Sudo)
+* [daemon](http://en.wikipedia.org/wiki/Daemon_%28computer_software%29)
+* [touch](http://en.wikipedia.org/wiki/Touch_%28Unix%29)
+* [httpd.conf](http://httpd.apache.org/docs/2.0/configuring.html)
+* [php.ini](http://jp2.php.net/manual/en/ini.php)
+* [MySQL with Macports](http://lists.macosforge.org/pipermail/macports-users/2007-June/004053.html)
+* [Launching mysql5](http://lists.macosforge.org/pipermail/macports-users/2007-April/002834.html)
